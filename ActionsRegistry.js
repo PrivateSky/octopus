@@ -316,11 +316,24 @@ function ActionsRegistry() {
                 global.collectLog = true;
             }
 
-            _clone(dependency.src, target, options, dependency.credentials, function (err, res) {
-                if (!err) {
-                    callback(err, `Finished clone action on dependency ${dependency.name}`);
-                }
-            });
+            if(typeof action.commit !== "undefined"){
+                //Do a shallow clone (for a specific commit)
+                options['commitNo'] = action.commit
+                    
+                _shallow_clone(dependency.src, target, options, dependency.credentials, function (err, res) {
+                    if (!err) {
+                        callback(err, `Finished clone action on dependency ${dependency.name}`);
+                    }
+                });
+            }
+            else{
+                //Do a normal clone
+                _clone(dependency.src, target, options, dependency.credentials, function (err, res) {
+                    if (!err) {
+                        callback(err, `Finished clone action on dependency ${dependency.name}`);
+                    }
+                });
+            }
         }
     };
 
@@ -392,6 +405,124 @@ function ActionsRegistry() {
                 callback(null, "");
             }
         });
+    };
+
+    
+    let _shallow_clone = function (remote, tmp, options, credentials, callback) {
+        let commandExists = _commandExistsSync("git");
+        if (!commandExists) {
+            throw "git command does not exist! Please install git and run again the program!"
+        }
+
+        //TODO: assert commitNo is inside the options
+        let commitNo = options['commitNo'];
+
+        let optionsCmd = "";
+        for (let op in options) {
+            if (op == 'commit') continue;
+            optionsCmd += " --" + op + "=" + options[op];
+        }
+        
+        optionsCmd += commitNo;
+
+        remote = _parseRemoteHttpUrl(remote, credentials);
+
+        function extractRepoName(repoURL){
+            let rx = /.*\/(.*)\.git/;
+            let name = rx.exec(repoURL);
+            return name[1];
+        }
+
+        //1 Make folder and go inside it
+        let repoName = extractRepoName(remote);
+        fs.mkdir(repoName, (err) => {
+            if(err) throw err;
+
+            try{
+                process.chdir(repoName);
+            } catch(ex){
+                throw "Could not change folder";
+            }
+
+            //2 Init repo
+            let cmdInit = 'git init';
+            console.log(cmdInit);
+            child_process.execSync(cmdInit, (err, std, stderr) => {
+            });
+
+            //3 Fetch repo at certain commit no
+            let cmdFetch = 'git fetch ' + remote + ' --depth=1 '+ commitNo;
+            console.log(cmdFetch);
+            child_process.execSync(cmdFetch, (err, std, stderr) => {
+            });
+
+            //4 Checkout commit number
+            let cmdCheckout = 'git checkout ' + commitNo;
+            console.log(cmdCheckout);
+            child_process.execSync(cmdCheckout, (err, std, stderr) => {
+            });
+        })
+
+        
+
+
+        
+
+        // let cmd = "git clone" + optionsCmd + " " + remote + " \"" + tmp + "\"";
+
+        // console.log(`Running command ${cmd}`);
+
+        // let errorHandlers = {
+        //     "warning: You appear to have cloned an empty repository": function () {
+        //         console.log("Empty repo. Nothing to worry. Continue...");
+        //         return true;
+        //     }
+        // };
+
+        // child_process.exec(cmd, {stdio: [0, "pipe", "pipe"]}, function (err, stdout, stderr) {
+        //     let next = true;
+        //     let handled = false;
+        //     if (err) {
+        //         for (let prop in errorHandlers) {
+        //             if (stdout && stdout.indexOf(prop) !== -1 || stderr && stderr.indexOf(prop) !== -1) {
+        //                 next = errorHandlers[prop]();
+        //                 if (!next) {
+        //                     handled = true;
+        //                     callback(err, "");
+        //                     break;
+        //                 }
+        //             }
+        //         }
+        //         if (!handled) {
+        //             callback(err);
+        //             return;
+        //         }
+        //     }
+        //     if (next && global.collectLog) {
+        //         cmd = "git log --max-count=1";
+
+        //         child_process.exec(cmd, {
+        //             cwd: path.resolve(tmp),
+        //             stdio: [0, "pipe", "pipe"]
+        //         }, function (err, stdout, stderr) {
+        //             if (!err) {
+        //                 let index = stdout.indexOf("\n\n");
+        //                 if (index !== -1) {
+        //                     index += 2;
+        //                 }
+        //                 msg = stdout.substring(index);
+
+        //                 if (msg.indexOf("#") === -1) {
+        //                     fs.appendFileSync(changeSet, msg);
+        //                 }
+        //             }
+
+        //             callback(null, "");
+        //         });
+        //     } else {
+        //         callback(null, "");
+        //     }
+        // });
     };
 
     let _parseRemoteHttpUrl = function (remote, credentials) {
