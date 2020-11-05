@@ -254,6 +254,12 @@ function ActionsRegistry() {
             target = fsExt.resolvePath(path.join(action.target, dependency.name));
         }
 
+        function extractRepoName(repoURL){
+            let rx = /.*\/(.*)\.git/;
+            let name = rx.exec(repoURL);
+            return name[1];
+        }
+
         // the target if exists and it's a git repo we try update
         if (fs.existsSync(target) && fs.readdirSync(target).length > 0 && fs.existsSync(path.join(target, ".git"))) {
 
@@ -271,18 +277,54 @@ function ActionsRegistry() {
                     }
 
                     try {
+                        //A. Stash it
                         child_process.execSync("git stash", basicProcOptions);
-                        let pullResult = child_process.execSync("git pull", basicProcOptions);
-                        pullResult = pullResult.toString();
-                        if (pullResult.indexOf("Already up-to-date") === -1) {
+
+                        //B. Pull
+                        if(typeof action.commit !== "undefined"){ //We have a commit no
+                            /**
+                             * The pull is nothing that a fetch + checkout
+                            */
+
+                            //1 - Fetch
+                            let remote = dependency.src;
+                            let commitNo = action.commit;
+                            let repoName = extractRepoName(remote);
+
+                            let cmdFetch = 'git fetch ' + remote + ' --depth=1 '+ commitNo;                            
                             try {
-                                //console.log("pullResult", pullResult.indexOf("Already up-to-date"));
-                                let log = child_process.execSync("git log --max-count=1", basicProcOptions).toString().split("\n").slice(4).join("\n");
-                                fs.appendFileSync(changeSet, log);
+                                let fetchResultLog = child_process.execSync(cmdFetch, {cwd: path.resolve(target)} /*basicProcOptions*/).toString();
+                                //TODO: Check why fetchResultLog is empty
+                                fs.appendFileSync(changeSet, fetchResultLog);
+                            } catch (err) {
+                                console.log(err);
+                            }
+
+                            //2 - Checkout
+                            let cmdCheckout = 'git checkout ' + commitNo;                            
+                            try {
+                                let checkoutResultLog = child_process.execSync(cmdCheckout, {cwd: path.resolve(target)} /*, basicProcOptions*/).toString();
+                                //TODO: Check why checkoutResultLog is empty
+                                fs.appendFileSync(changeSet, checkoutResultLog);
                             } catch (err) {
                                 console.log(err);
                             }
                         }
+                        else{ //no commit no => classic pull
+                            let pullResult = child_process.execSync("git pull", basicProcOptions);
+                            pullResult = pullResult.toString();
+                            if (pullResult.indexOf("Already up-to-date") === -1) {
+                                try {
+                                    //console.log("pullResult", pullResult.indexOf("Already up-to-date"));
+                                    let log = child_process.execSync("git log --max-count=1", basicProcOptions).toString().split("\n").slice(4).join("\n");
+                                    fs.appendFileSync(changeSet, log);
+                                } catch (err) {
+                                    console.log(err);
+                                }
+                            }
+                        }
+
+                        //C. Apply stash
                         let finalResult = child_process.execSync("git stash apply", basicProcOptions);
                         if (finalResult.indexOf("Unmerged") !== -1) {
                             callback(new Error(`Repo ${target} needs attention! (Merging issues)`), `Finished update action on dependency ${dependency.name}`)
@@ -427,6 +469,7 @@ function ActionsRegistry() {
 
         remote = _parseRemoteHttpUrl(remote, credentials);
 
+        /**Extract only the repo name from a git address */
         function extractRepoName(repoURL){
             let rx = /.*\/(.*)\.git/;
             let name = rx.exec(repoURL);
@@ -450,6 +493,12 @@ function ActionsRegistry() {
             child_process.execSync(cmdInit, (err, std, stderr) => {
             });
 
+            //2.1 Add remote repo
+            let cmdAddRemote = 'git remote add origin ' + remote;
+            console.log(cmdAddRemote);
+            child_process.execSync(cmdAddRemote, (err, std, stderr) => {
+            });
+
             //3 Fetch repo at certain commit no
             let cmdFetch = 'git fetch ' + remote + ' --depth=1 '+ commitNo;
             console.log(cmdFetch);
@@ -462,67 +511,6 @@ function ActionsRegistry() {
             child_process.execSync(cmdCheckout, (err, std, stderr) => {
             });
         })
-
-        
-
-
-        
-
-        // let cmd = "git clone" + optionsCmd + " " + remote + " \"" + tmp + "\"";
-
-        // console.log(`Running command ${cmd}`);
-
-        // let errorHandlers = {
-        //     "warning: You appear to have cloned an empty repository": function () {
-        //         console.log("Empty repo. Nothing to worry. Continue...");
-        //         return true;
-        //     }
-        // };
-
-        // child_process.exec(cmd, {stdio: [0, "pipe", "pipe"]}, function (err, stdout, stderr) {
-        //     let next = true;
-        //     let handled = false;
-        //     if (err) {
-        //         for (let prop in errorHandlers) {
-        //             if (stdout && stdout.indexOf(prop) !== -1 || stderr && stderr.indexOf(prop) !== -1) {
-        //                 next = errorHandlers[prop]();
-        //                 if (!next) {
-        //                     handled = true;
-        //                     callback(err, "");
-        //                     break;
-        //                 }
-        //             }
-        //         }
-        //         if (!handled) {
-        //             callback(err);
-        //             return;
-        //         }
-        //     }
-        //     if (next && global.collectLog) {
-        //         cmd = "git log --max-count=1";
-
-        //         child_process.exec(cmd, {
-        //             cwd: path.resolve(tmp),
-        //             stdio: [0, "pipe", "pipe"]
-        //         }, function (err, stdout, stderr) {
-        //             if (!err) {
-        //                 let index = stdout.indexOf("\n\n");
-        //                 if (index !== -1) {
-        //                     index += 2;
-        //                 }
-        //                 msg = stdout.substring(index);
-
-        //                 if (msg.indexOf("#") === -1) {
-        //                     fs.appendFileSync(changeSet, msg);
-        //                 }
-        //             }
-
-        //             callback(null, "");
-        //         });
-        //     } else {
-        //         callback(null, "");
-        //     }
-        // });
     };
 
     let _parseRemoteHttpUrl = function (remote, credentials) {
