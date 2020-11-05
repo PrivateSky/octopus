@@ -281,7 +281,7 @@ function ActionsRegistry() {
                         child_process.execSync("git stash", basicProcOptions);
 
                         //B. Pull
-                        if(typeof action.commit !== "undefined"){ //We have a commit no
+                        if(!process.env.DEV && typeof action.commit !== "undefined"){ //We have a commit no
                             /**
                              * The pull is nothing that a fetch + checkout
                             */
@@ -358,7 +358,7 @@ function ActionsRegistry() {
                 global.collectLog = true;
             }
 
-            if(typeof action.commit !== "undefined"){
+            if(!process.env.DEV && typeof action.commit !== "undefined"){
                 //Do a shallow clone (for a specific commit)
                 options['commitNo'] = action.commit
                     
