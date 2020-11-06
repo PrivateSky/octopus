@@ -359,19 +359,23 @@ function ActionsRegistry() {
             if(!process.env.DEV && typeof action.commit !== "undefined"){
                 //Do a shallow clone (for a specific commit)
                 options['commitNo'] = action.commit
-                    
+                
                 _shallow_clone(dependency.src, target, options, dependency.credentials, function (err, res) {
+                    let msg;
                     if (!err) {
-                        callback(err, `Finished clone action on dependency ${dependency.name}`);
+                        msg = `Finished shallow clone action on dependency ${dependency.name}`;
                     }
+                    callback(err, msg);
                 });
             }
             else{
                 //Do a normal clone
                 _clone(dependency.src, target, options, dependency.credentials, function (err, res) {
+                    let msg;
                     if (!err) {
-                        callback(err, `Finished clone action on dependency ${dependency.name}`);
+                        msg = `Finished clone action on dependency ${dependency.name}`;
                     }
+                    callback(err, msg);
                 });
             }
         }
@@ -481,38 +485,42 @@ function ActionsRegistry() {
 
             try{
                 process.chdir(repoName);
+            
+
+                //2 Init repo
+                let cmdInit = 'git init';
+                console.log(cmdInit);
+                
+                    child_process.execSync(cmdInit);
+                
+
+                //2.1 Add remote repo
+                let cmdAddRemote = 'git remote add origin ' + remote;
+                console.log(cmdAddRemote);
+                child_process.execSync(cmdAddRemote, (err, std, stderr) => {
+                    if(err) throw err;
+                });
+
+                //3 Fetch repo at certain commit no
+                let cmdFetch = 'git fetch ' + remote + ' --depth=1 '+ commitNo;
+                console.log(cmdFetch);
+                child_process.execSync(cmdFetch, (err, std, stderr) => {
+                    if(err) throw err;
+                });
+
+                //4 Checkout commit number
+                let cmdCheckout = 'git checkout ' + commitNo;
+                console.log(cmdCheckout);
+                child_process.execSync(cmdCheckout, (err, std, stderr) => {
+                    if(err) throw err;
+                });
+
             } catch(ex){
-                throw "Could not change folder";
+                callback(ex);
             }
 
-            //2 Init repo
-            let cmdInit = 'git init';
-            console.log(cmdInit);
-            child_process.execSync(cmdInit, (err, std, stderr) => {
-                if(err) throw err;
-            });
-
-            //2.1 Add remote repo
-            let cmdAddRemote = 'git remote add origin ' + remote;
-            console.log(cmdAddRemote);
-            child_process.execSync(cmdAddRemote, (err, std, stderr) => {
-                if(err) throw err;
-            });
-
-            //3 Fetch repo at certain commit no
-            let cmdFetch = 'git fetch ' + remote + ' --depth=1 '+ commitNo;
-            console.log(cmdFetch);
-            child_process.execSync(cmdFetch, (err, std, stderr) => {
-                if(err) throw err;
-            });
-
-            //4 Checkout commit number
-            let cmdCheckout = 'git checkout ' + commitNo;
-            console.log(cmdCheckout);
-            child_process.execSync(cmdCheckout, (err, std, stderr) => {
-                if(err) throw err;
-            });
-        })
+            callback();
+        })        
     };
 
     let _parseRemoteHttpUrl = function (remote, credentials) {
