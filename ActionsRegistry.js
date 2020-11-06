@@ -293,9 +293,8 @@ function ActionsRegistry() {
 
                             let cmdFetch = 'git fetch ' + remote + ' --depth=1 '+ commitNo;                            
                             try {
-                                let fetchResultLog = child_process.execSync(cmdFetch, {cwd: path.resolve(target)} /*basicProcOptions*/).toString();
-                                //TODO: Check why fetchResultLog is empty
-                                fs.appendFileSync(changeSet, fetchResultLog);
+                                let fetchResultLog = child_process.execSync(cmdFetch, {cwd: path.resolve(target)} /*basicProcOptions*/).toString();                                
+                                //fs.appendFileSync(changeSet, fetchResultLog);
                             } catch (err) {
                                 console.log(err);
                             }
@@ -303,9 +302,8 @@ function ActionsRegistry() {
                             //2 - Checkout
                             let cmdCheckout = 'git checkout ' + commitNo;                            
                             try {
-                                let checkoutResultLog = child_process.execSync(cmdCheckout, {cwd: path.resolve(target)} /*, basicProcOptions*/).toString();
-                                //TODO: Check why checkoutResultLog is empty
-                                fs.appendFileSync(changeSet, checkoutResultLog);
+                                let checkoutResultLog = child_process.execSync(cmdCheckout, {cwd: path.resolve(target)} /*, basicProcOptions*/).toString();                                
+                                //fs.appendFileSync(changeSet, checkoutResultLog);
                             } catch (err) {
                                 console.log(err);
                             }
@@ -478,7 +476,7 @@ function ActionsRegistry() {
 
         //1 Make folder and go inside it
         let repoName = extractRepoName(remote);
-        fs.mkdir(repoName, (err) => {
+        fs.mkdir(repoName, {recursive : true}, (err) => {
             if(err) throw err;
 
             try{
@@ -491,24 +489,28 @@ function ActionsRegistry() {
             let cmdInit = 'git init';
             console.log(cmdInit);
             child_process.execSync(cmdInit, (err, std, stderr) => {
+                if(err) throw err;
             });
 
             //2.1 Add remote repo
             let cmdAddRemote = 'git remote add origin ' + remote;
             console.log(cmdAddRemote);
             child_process.execSync(cmdAddRemote, (err, std, stderr) => {
+                if(err) throw err;
             });
 
             //3 Fetch repo at certain commit no
             let cmdFetch = 'git fetch ' + remote + ' --depth=1 '+ commitNo;
             console.log(cmdFetch);
             child_process.execSync(cmdFetch, (err, std, stderr) => {
+                if(err) throw err;
             });
 
             //4 Checkout commit number
             let cmdCheckout = 'git checkout ' + commitNo;
             console.log(cmdCheckout);
             child_process.execSync(cmdCheckout, (err, std, stderr) => {
+                if(err) throw err;
             });
         })
     };
