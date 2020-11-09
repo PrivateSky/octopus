@@ -254,12 +254,6 @@ function ActionsRegistry() {
             target = fsExt.resolvePath(path.join(action.target, dependency.name));
         }
 
-        function extractRepoName(repoURL){
-            let rx = /.*\/(.*)\.git/;
-            let name = rx.exec(repoURL);
-            return name[1];
-        }
-
         // the target if exists and it's a git repo we try update
         if (fs.existsSync(target) && fs.readdirSync(target).length > 0 && fs.existsSync(path.join(target, ".git"))) {
 
@@ -289,7 +283,7 @@ function ActionsRegistry() {
                             //1 - Fetch
                             let remote = dependency.src;
                             let commitNo = action.commit;
-                            let repoName = extractRepoName(remote);
+                            let repoName = dependency.name;
 
                             let cmdFetch = 'git fetch ' + remote + ' --depth=1 '+ commitNo;                            
                             try {
@@ -452,7 +446,7 @@ function ActionsRegistry() {
     };
 
     
-    let _shallow_clone = function (remote, tmp, options, credentials, callback) {
+    let _shallow_clone = function (remote, tmpFolder, options, credentials, callback) {
         let commandExists = _commandExistsSync("git");
         if (!commandExists) {
             throw "git command does not exist! Please install git and run again the program!"
@@ -471,27 +465,19 @@ function ActionsRegistry() {
 
         remote = _parseRemoteHttpUrl(remote, credentials);
 
-        /**Extract only the repo name from a git address */
-        function extractRepoName(repoURL){
-            let rx = /.*\/(.*)\.git/;
-            let name = rx.exec(repoURL);
-            return name[1];
-        }
 
         //1 Make folder and go inside it
-        let repoName = extractRepoName(remote);
-        fs.mkdir(repoName, {recursive : true}, (err) => {
+        fs.mkdir(tmpFolder, {recursive : true}, (err) => {
             if(err) throw err;
 
             try{
-                process.chdir(repoName);
+                process.chdir(tmpFolder);
             
 
                 //2 Init repo
                 let cmdInit = 'git init';
-                console.log(cmdInit);
-                
-                    child_process.execSync(cmdInit);
+                console.log(cmdInit);                
+                child_process.execSync(cmdInit);
                 
 
                 //2.1 Add remote repo
