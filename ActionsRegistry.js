@@ -272,7 +272,11 @@ function ActionsRegistry() {
 
                     try {
                         //A. Stash it
-                        child_process.execSync("git stash", basicProcOptions);
+                        try {
+                            child_process.execSync("git stash", basicProcOptions);
+                        } catch (err) {
+                            console.log(err);
+                        }
 
                         //B. Pull
                         if(!process.env.DEV && typeof action.commit !== "undefined"){ //We have a commit no
@@ -477,29 +481,39 @@ function ActionsRegistry() {
                 //2 Init repo
                 let cmdInit = 'git init';
                 console.log(cmdInit);                
-                child_process.execSync(cmdInit);
+                try{
+                    child_process.execSync(cmdInit);
+                } catch(err){
+                    console.log(err);
+                }
                 
 
                 //2.1 Add remote repo
                 let cmdAddRemote = 'git remote add origin ' + remote;
                 console.log(cmdAddRemote);
-                child_process.execSync(cmdAddRemote, (err, std, stderr) => {
-                    if(err) throw err;
-                });
+                try{
+                    child_process.execSync(cmdAddRemote);
+                } catch(err){
+                    console.log(err);
+                }
 
                 //3 Fetch repo at certain commit no
                 let cmdFetch = 'git fetch ' + remote + ' --depth=1 '+ commitNo;
                 console.log(cmdFetch);
-                child_process.execSync(cmdFetch, (err, std, stderr) => {
-                    if(err) throw err;
-                });
+                try{
+                    child_process.execSync(cmdFetch);
+                } catch(err){
+                    console.log(err);
+                }
 
                 //4 Checkout commit number
                 let cmdCheckout = 'git checkout ' + commitNo;
                 console.log(cmdCheckout);
-                child_process.execSync(cmdCheckout, (err, std, stderr) => {
-                    if(err) throw err;
-                });
+                try{
+                    child_process.execSync(cmdCheckout);
+                } catch(err){
+                    console.log(err);
+                }
 
             } catch(ex){
                 callback(ex);
