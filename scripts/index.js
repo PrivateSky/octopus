@@ -1,6 +1,8 @@
 const path = require("path");
 //path.resolve(path.join(__dirname, "./../octopus.json"));
-let CONFIG_FILE_PATH = path.resolve("./octopus.json");
+
+//DEV flag is set inside the env.json file by [script]/setEnv.js file
+let CONFIG_FILE_PATH = process.env.DEV ? path.resolve("./octopus-dev.json") : path.resolve("./octopus.json");
 
 function createBasicConfig(...configParts) {
 	return {"workDir": ".", "dependencies": [...configParts]};
@@ -31,7 +33,8 @@ function readConfig(disableInitialization) {
 						"src": `http://github.com/privatesky/${privateSkyRepo}.git`,
 						"actions": [
 							{
-								"type": "smartClone",
+								"type": "smartClone",								
+								"commit" : "2c23eaf053b04460152992c10773e45531ec787b",
 								"target": ".",
 								"collectLog": false
 							},
