@@ -2,7 +2,7 @@ const path = require("path");
 //path.resolve(path.join(__dirname, "./../octopus.json"));
 
 //DEV flag is set inside the env.json file by [script]/setEnv.js file
-let CONFIG_FILE_PATH = process.env.DEV ? path.resolve("./octopus-dev.json") : path.resolve("./octopus.json");
+let CONFIG_FILE_PATH = 	process.env.DEV ? path.resolve("./octopus-dev.json") : path.resolve("./octopus.json");
 
 function createBasicConfig(...configParts) {
 	return {"workDir": ".", "dependencies": [...configParts]};
@@ -15,7 +15,7 @@ function readConfig(disableInitialization) {
 		config = require(CONFIG_FILE_PATH);
 	} catch (err) {
 		if (err.code === "MODULE_NOT_FOUND") {
-			console.log("Configuration file octopus.json not found. Creating a new config object.");
+			console.log("Configuration file " + CONFIG_FILE_PATH + " not found. Creating a new config object.");
 			config = createBasicConfig();
 			let privateSkyRepo;
 			console.log("Looking for PRIVATESKY_REPO_NAME as env variable. It can be used to change what PrivateSky repo will be user: psk-release or privatesky.");
@@ -34,7 +34,6 @@ function readConfig(disableInitialization) {
 						"actions": [
 							{
 								"type": "smartClone",								
-								"commit" : "2c23eaf053b04460152992c10773e45531ec787b",
 								"target": ".",
 								"collectLog": false
 							},
@@ -97,11 +96,17 @@ function changeConfigFile(configFilePath){
 	CONFIG_FILE_PATH = path.resolve(configFilePath);
 }
 
+/**Returns current configuration file*/
+function getConfigFile(){
+	return CONFIG_FILE_PATH;
+}
+
 module.exports = {
 	createBasicConfig,
 	readConfig,
 	updateConfig,
 	runConfig,
 	handleError,
-	changeConfigFile
+	changeConfigFile,
+	getConfigFile
 };
