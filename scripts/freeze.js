@@ -11,18 +11,23 @@ const fs = require("fs");
 const child_process = require('child_process');
 
 
-let config =  octopus.readConfig();
+// Save current config file
+currentConfigFile = octopus.getConfigFile();
 
+// Ensure that we are switched to DEV configuration
+octopus.changeConfigFile('./octopus-dev.json');
+
+let config =  octopus.readConfig();
 
 /**Performs a freeze on current configuration loaded from file (octopus.json or octopus-dev.json) */
 function freezeConfig(config){
 
-    function updateAction(dependency, action){
+    function updateSmartCloneAction(dependency, action){
         /**
          * If the action has the commit no - ignore it
          * Else take current commit no (current head) from git
          */
-        if(typeof action.commit == "undefined"){
+        // if(typeof action.commit == "undefined"){
             console.log("Found " + action.type + " to be ready for update");          
             var targetFolder = fsExt.resolvePath(path.join(config.workDir, dependency.name));
             console.log("Dependency folder: " + targetFolder);
@@ -44,7 +49,7 @@ function freezeConfig(config){
             else{
                 console.log("Folder/Repo " + targetFolder + " not available. Please make sure all repositories were pulled and updated to correct version");
             }
-        }
+        // }
     }
 
     for (i=0;i<config.dependencies.length; i++){        
@@ -52,19 +57,28 @@ function freezeConfig(config){
         for(j=0;j<dep.actions.length; j++){
             let action = dep.actions[j];
             if(action.type == 'smartClone'){
-                updateAction(dep, action);
+                updateSmartCloneAction(dep, action);
             }
         }
     }
 
 }
 
+//Update config
 freezeConfig(config);
 
+//Switch to stable octopus
+octopus.changeConfigFile('./octopus.json');
+
+//Save it
 octopus.updateConfig(config, (err) => {
     if(err){
         throw err;
     }
 
     console.log("Configuration file  " + octopus.getConfigFile() +  " updated.")
+
+    //Change back to original config file
+    octopus.changeConfigFile(currentConfigFile);
 });
+
