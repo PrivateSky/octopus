@@ -2,7 +2,7 @@ const path = require("path");
 //path.resolve(path.join(__dirname, "./../octopus.json"));
 
 //DEV flag is set inside the env.json file by [script]/setEnv.js file
-let CONFIG_FILE_PATH = 	process.env.DEV ? path.resolve("./octopus-dev.json") : path.resolve("./octopus.json");
+let CONFIG_FILE_PATH = 	process.env.DEV === "true" ? path.resolve("./octopus-dev.json") : path.resolve("./octopus.json");
 
 function createBasicConfig(...configParts) {
 	return {"workDir": ".", "dependencies": [...configParts]};
