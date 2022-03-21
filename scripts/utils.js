@@ -96,7 +96,7 @@ module.exports.commitPackageJSON = async function (targetFolder) {
 	return;
 }
 
-module.exports.incrementTag = function (tag) {
+module.exports.incrementTag = async function (tag) {
 	if (["v", "V"].indexOf(tag[0]) !== -1) {
 		tag = tag.substring(1);
 	}
