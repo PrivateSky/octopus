@@ -4,11 +4,10 @@ const child_process = require('child_process');
 const readlineModule = "readline";
 const readline = require(readlineModule);
 
-async function askQuestion (question){
-	return new Promise((resolve, reject)=>{
+async function askQuestion(question) {
+	return new Promise((resolve, reject) => {
 		const rl = readline.createInterface({
-			input: process.stdin,
-			output: process.stdout
+			input: process.stdin, output: process.stdout
 		});
 		rl.question(question, (answer) => {
 			resolve(answer);
@@ -19,7 +18,7 @@ async function askQuestion (question){
 
 module.exports.DEFAULT_VERSION = "1.0.0";
 
-module.exports.createPackageJSON = function(targetFolder, version, license){
+module.exports.createPackageJSON = function (targetFolder, version, license) {
 	version = version || module.exports.DEFAULT_VERSION;
 	license = license || "MIT";
 
@@ -34,13 +33,13 @@ module.exports.createPackageJSON = function(targetFolder, version, license){
 
 module.exports.readVersionFromPackageJSON = async function (targetFolder) {
 	let version;
-	try{
+	try {
 		version = require(path.join(targetFolder, "package.json")).version;
-	}catch(err){
-		if(err.code === "MODULE_NOT_FOUND"){
+	} catch (err) {
+		if (err.code === "MODULE_NOT_FOUND") {
 			console.log(`Not able to read package.json file.`);
 			const answer = await askQuestion(`Would you like to initiate a package.json and commit it for you? [y/n]`);
-			if(answer==='y'){
+			if (answer === 'y') {
 				version = module.exports.DEFAULT_VERSION;
 				module.exports.createPackageJSON(targetFolder, version);
 				module.exports.commitPackageJSON(targetFolder);
@@ -121,8 +120,6 @@ module.exports.createTag = async function (targetFolder, tag) {
 	let out;
 	try {
 		out = child_process.execSync(`git tag -a ${tag} -m "new tag release ${tag}"`, {cwd: targetFolder}).toString().trim();
-
-
 		const answer = await askQuestion(`Tag ${tag} was created, do you want to push the changes?[y/n]`);
 		if (answer === "y") {
 			const cmd = `git push origin refs/tags/${tag}`;
@@ -152,8 +149,8 @@ module.exports.readCommitSHA = function (targetFolder) {
 	return commitNumber;
 }
 
-module.exports.checkIfAnyCommitsBetweenDates = function(date1, date2, targetFolder){
-	const cmd = `git log --since "${date1+1}" --until "${date2}" --pretty=format:"%h %an %ad"`;
+module.exports.checkIfAnyCommitsBetweenDates = function (date1, date2, targetFolder) {
+	const cmd = `git log --since "${date1 + 1}" --until "${date2}" --pretty=format:"%h %an %ad"`;
 	console.log("Checking if there are any commits between dates.")
 	console.log("Executing cmd", cmd);
 	let out = child_process.execSync(cmd, {cwd: targetFolder}).toString().trim();
@@ -168,7 +165,7 @@ module.exports.getCommitDate = function (targetFolder, sha) {
 
 module.exports.getTagDate = function (targetFolder, tag) {
 	let out = child_process.execSync(`git tag --list '${tag}' --format '%(taggerdate:raw)'`, {cwd: targetFolder}).toString().trim();
-	if(out){
+	if (out) {
 		out = out.split(" ");
 		out.pop();
 	}

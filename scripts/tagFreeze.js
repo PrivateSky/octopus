@@ -140,7 +140,6 @@ function freezeConfig(config) {
 		console.log(`The scanning process will be performed for the following task lists `, targets);
 		for(let index=0; index<targets.length; index++){
 			const target = targets[index];
-		//targets.forEach(async target => {
 			let tasks = config[target];
 			if (typeof tasks === "undefined") {
 				return octopus.handleError(`Unable to find the task list called <${target}> in current config.`);
@@ -174,10 +173,10 @@ freezeConfig(config).then(() => {
 		console.log(`\nIf neccessary, check the situations and run again the script.\n===============`);
 	}
 
-//Switch to stable octopus
+	//Switch to stable octopus
 	octopus.setConfigFileToMode(false);
 
-//Save it
+	//Save it
 	octopus.updateConfig(config, (err) => {
 		if (err) {
 			throw err;
