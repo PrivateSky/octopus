@@ -128,6 +128,9 @@ module.exports.createTag = async function (targetFolder, tag) {
 	let out;
 	try {
 		out = child_process.execSync(`git tag -a ${tag} -m "new tag release ${tag}"`, {cwd: targetFolder}).toString().trim();
+		if(out){
+			console.log(out);
+		}
 		const answer = await askQuestion(`Tag ${tag} was created, do you want to push the changes?[y/n]`);
 		if (answer === "y") {
 			const cmd = `git push origin refs/tags/${tag}`;
