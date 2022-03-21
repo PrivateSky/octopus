@@ -110,7 +110,7 @@ module.exports.incrementTag = function (tag) {
 	segments[2]++;
 
 	let newTag = segments.join(".");
-	const answer = askQuestion(`Incremented tag version to ${newTag}. You can enter the desired value or hit [n] to use the default`);
+	const answer = await askQuestion(`Incremented tag version to ${newTag}. You can enter the desired value or hit [n] to use the default`);
 	if(answer!=="n"){
 		console.log(`Tag value entered: ${answer}`);
 		newTag = answer;
