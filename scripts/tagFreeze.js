@@ -103,7 +103,7 @@ function freezeConfig(config) {
 					console.log(`Comparing dates of the tag and latest commit, ${tagDate} < ${commitDate}`);
 					if (tagDate < commitDate) {
 						console.log("Current state of the repo shows that a new tag needs to be created!");
-						repoLatestTag = incrementTag(repoLatestTag);
+						repoLatestTag = await incrementTag(repoLatestTag);
 						ensureVersionInPackageJSON(targetFolder, repoLatestTag);
 						commitPackageJSON(targetFolder);
 						createTag(targetFolder, "v" + repoLatestTag);

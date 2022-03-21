@@ -97,7 +97,7 @@ module.exports.commitPackageJSON = async function (targetFolder) {
 }
 
 module.exports.incrementTag = function (tag) {
-	if (["v", "V"].tag[0] !== -1) {
+	if (["v", "V"].indexOf(tag[0]) !== -1) {
 		tag = tag.substring(1);
 	}
 	let segments = tag.split(".");
@@ -106,8 +106,16 @@ module.exports.incrementTag = function (tag) {
 		segments.push("0");
 	}
 
-	segments[2] = Int.parse(segments[2])++;
-	return segments.join(".");
+	segments[2] = Int.parse(segments[2]);
+	segments[2]++;
+
+	let newTag = segments.join(".");
+	const answer = askQuestion(`Incremented tag version to ${newTag}. You can enter the desired value or hit [n] to use the default`);
+	if(answer!=="n"){
+		console.log(`Tag value entered: ${answer}`);
+		newTag = answer;
+	}
+	return newTag;
 }
 
 module.exports.getCommitForTag = function (targetFolder, tag) {
