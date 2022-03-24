@@ -83,7 +83,7 @@ const buildDossier = function (cfg, commands, callback) {
     let openDSU_bundle = path.join(process.cwd(), cfg.bundles, "openDSU.js");
     require(openDSU_bundle);
 
-    require('opendsu').loadApi('dt').getDossierBuilder((err, dossier_builder) => {
+    require('opendsu').loadApi('dt').getDossierBuilderAsync((err, dossier_builder) => {
         if (err) {
             return callback(err);
         }

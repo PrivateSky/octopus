@@ -186,9 +186,9 @@ function ActionsRegistry() {
         }
 
         let target = fsExt.resolvePath(action.target);
-        try{
+        try {
             fsExt.createDir(target);
-        }catch(err){
+        } catch (err) {
             return callback(err);
         }
 
@@ -227,9 +227,9 @@ function ActionsRegistry() {
             options = action.options;
         }
 
-        if(typeof action.collectLog !== "undefined"){
+        if (typeof action.collectLog !== "undefined") {
             global.collectLog = action.collectLog;
-        }else{
+        } else {
             global.collectLog = true;
         }
 
@@ -279,7 +279,7 @@ function ActionsRegistry() {
                         }
 
                         //B. Pull
-                        if(typeof action.commit !== "undefined"){ //We have a commit no
+                        if (typeof action.commit !== "undefined") { //We have a commit no
                             /**
                              * The pull is nothing that a fetch + checkout
                              */
@@ -289,7 +289,7 @@ function ActionsRegistry() {
                             let commitNo = action.commit;
                             //let repoName = dependency.name;
 
-                            let cmdFetch = 'git fetch ' + remote + ' --depth=1 '+ commitNo;
+                            let cmdFetch = 'git fetch ' + remote + ' --depth=1 ' + commitNo;
                             try {
                                 let fetchResultLog = child_process.execSync(cmdFetch, {cwd: path.resolve(target)} /*basicProcOptions*/).toString();
                                 console.log("Result of fetching of version", changeSet, fetchResultLog);
@@ -305,8 +305,7 @@ function ActionsRegistry() {
                             } catch (err) {
                                 console.log(err);
                             }
-                        }
-                        else{ //no commit no => classic pull
+                        } else { //no commit no => classic pull
                             let pullResult = child_process.execSync("git pull", basicProcOptions);
                             pullResult = pullResult.toString();
                             if (pullResult.indexOf("Already up-to-date") === -1) {
@@ -348,13 +347,13 @@ function ActionsRegistry() {
                 options = action.options;
             }
 
-            if(typeof action.collectLog !== "undefined"){
+            if (typeof action.collectLog !== "undefined") {
                 global.collectLog = action.collectLog;
-            }else{
+            } else {
                 global.collectLog = true;
             }
 
-            if(typeof action.commit !== "undefined"){
+            if (typeof action.commit !== "undefined") {
                 //Do a shallow clone (for a specific commit)
                 options['commitNo'] = action.commit
 
@@ -365,8 +364,7 @@ function ActionsRegistry() {
                     }
                     callback(err, msg);
                 });
-            }
-            else{
+            } else {
                 //Do a normal clone
                 _clone(src, target, options, dependency.credentials, function (err, res) {
                     let msg;
@@ -471,17 +469,17 @@ function ActionsRegistry() {
 
 
         //1 Make folder and go inside it
-        fs.mkdir(tmpFolder, {recursive : true}, (err) => {
-            if(err) throw err;
+        fs.mkdir(tmpFolder, {recursive: true}, (err) => {
+            if (err) throw err;
 
-            try{
+            try {
 
                 //2 Init repo
                 let cmdInit = `cd ${tmpFolder} && git init`;
                 console.log(cmdInit);
-                try{
+                try {
                     child_process.execSync(cmdInit);
-                } catch(err){
+                } catch (err) {
                     console.log(err);
                 }
 
@@ -489,31 +487,31 @@ function ActionsRegistry() {
                 //2.1 Add remote repo
                 let cmdAddRemote = `cd ${tmpFolder} && git remote add origin ${remote}`;
                 console.log(cmdAddRemote);
-                try{
+                try {
                     child_process.execSync(cmdAddRemote);
-                } catch(err){
+                } catch (err) {
                     console.log(err);
                 }
 
                 //3 Fetch repo at certain commit no
-                let cmdFetch = `cd ${tmpFolder} && git fetch ` + remote + ' --depth=1 '+ commitNo;
+                let cmdFetch = `cd ${tmpFolder} && git fetch ` + remote + ' --depth=1 ' + commitNo;
                 console.log(cmdFetch);
-                try{
+                try {
                     child_process.execSync(cmdFetch);
-                } catch(err){
+                } catch (err) {
                     console.log(err);
                 }
 
                 //4 Checkout commit number
                 let cmdCheckout = `cd ${tmpFolder} && git checkout ` + commitNo;
                 console.log(cmdCheckout);
-                try{
+                try {
                     child_process.execSync(cmdCheckout);
-                } catch(err){
+                } catch (err) {
                     console.log(err);
                 }
 
-            } catch(ex){
+            } catch (ex) {
                 callback(ex);
             }
             callback();
@@ -699,7 +697,13 @@ function ActionsRegistry() {
         options.overwrite = !!options.overwrite;
 
         console.log("Start copying " + src + " to folder " + action.target);
-        fsExt.copy(src, action.target, options, callback);
+        fsExt.copy(src, action.target, options, (err, ...args) => {
+            if (err && options.ignoreErrors) {
+                console.log(err);
+                err = undefined;
+            }
+            callback(err, ...args);
+        });
     };
 
     /**
@@ -789,73 +793,73 @@ function ActionsRegistry() {
         callback(null, `Finished checksum action on dependency ${dependency.name}`);
     };
 
-	actions.execute = function (action, dependency, callback) {
-		if (!action.cmd) {
-			throw "No command given";
-		}
-
-		if (!action.os || (action.os && action.os == os.platform()) ){
-
-			let child;
-			try {
-				console.log("Running command:", action.cmd);
-				if (typeof action.options !== "undefined") {
-					console.log("with opts:", action.options);
-				}
-				//child_process.execSync(action.cmd, action.options);
-				const options = {
-					stdio: "inherit",
-					shell: true
-				};
-				Object.assign(options, action.options);
-				child = child_process.spawnSync(action.cmd, action.args, options);
-				const executionFailReason = (child.status === null && child.signal) ? child.signal : child.status;
-				const label = (child.status === null && child.signal) ? "signal" : "exit code";
-				if(executionFailReason && !options.ignoreErrors){
-				    return callback(`Action execute finished: ${label} ${executionFailReason}`);
-                }
-			} catch (err) {
-				if (callback) {
-					callback(err);
-				}
-			}
-        } else {
-            console.log("Skipping command [" + action.cmd +  "] because was not meant for your curent OS.")
+    actions.execute = function (action, dependency, callback) {
+        if (!action.cmd) {
+            throw "No command given";
         }
 
-	/*	let err;
-		if (child.status !== 0) {
-			err = new Error(`Command finished with exit code ${child.status}. Hint: inspect command configuration, environment variables etc. and try again.`);
-		}*/
-		if (callback) {
-			callback();
-		} /*else {
+        if (!action.os || (action.os && action.os == os.platform())) {
+
+            let child;
+            try {
+                console.log("Running command:", action.cmd);
+                if (typeof action.options !== "undefined") {
+                    console.log("with opts:", action.options);
+                }
+                //child_process.execSync(action.cmd, action.options);
+                const options = {
+                    stdio: "inherit",
+                    shell: true
+                };
+                Object.assign(options, action.options);
+                child = child_process.spawnSync(action.cmd, action.args, options);
+                const executionFailReason = (child.status === null && child.signal) ? child.signal : child.status;
+                const label = (child.status === null && child.signal) ? "signal" : "exit code";
+                if (executionFailReason && !options.ignoreErrors) {
+                    return callback(`Action execute finished: ${label} ${executionFailReason}`);
+                }
+            } catch (err) {
+                if (callback) {
+                    callback(err);
+                }
+            }
+        } else {
+            console.log("Skipping command [" + action.cmd + "] because was not meant for your curent OS.")
+        }
+
+        /*	let err;
+            if (child.status !== 0) {
+                err = new Error(`Command finished with exit code ${child.status}. Hint: inspect command configuration, environment variables etc. and try again.`);
+            }*/
+        if (callback) {
+            callback();
+        } /*else {
 			throw err;
 		}*/
-	};
+    };
 
     actions.executeAsync = function (action, dependency, callback) {
         if (!action.cmd) {
             throw "No command given";
         }
         console.log("Running command:", action.cmd, "with opts:", action.options);
-		if (!action.os || (action.os && action.os == os.platform()) ){
-			child_process.exec(action.cmd, action.options, function(err, stdout, stderr){
-				if(err){
-					return callback(err);
-				}
-				console.log(stdout);
-				console.log(stderr);
-				callback(undefined, `Execute command finished.`);
+        if (!action.os || (action.os && action.os == os.platform())) {
+            child_process.exec(action.cmd, action.options, function (err, stdout, stderr) {
+                if (err) {
+                    return callback(err);
+                }
+                console.log(stdout);
+                console.log(stderr);
+                callback(undefined, `Execute command finished.`);
 
-			});
-		} else {
-            console.log("Skipping command [" + action.cmd +  "] because was not meant for your curent OS.")
+            });
+        } else {
+            console.log("Skipping command [" + action.cmd + "] because was not meant for your curent OS.")
 
-			if (callback) {
-				callback();
-			}
-		}
+            if (callback) {
+                callback();
+            }
+        }
 
     };
 
