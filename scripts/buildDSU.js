@@ -10,7 +10,7 @@ const DOMAIN_TAG = "--domain=";
 
 const path = require('path');
 
-const parse_arguments = function (arguments) {
+const parse_arguments = function(arguments){
     let config, seed, domain, bundles;
     arguments.forEach(a => {
         if (!a)
@@ -21,7 +21,8 @@ const parse_arguments = function (arguments) {
             domain = a.replace(DOMAIN_TAG, '');
         else if (a.includes(SEED_TAG))
             seed = a.replace(SEED_TAG, '');
-        else if (config === undefined)
+        else
+        if (config === undefined)
             config = a;
         else
             throw new Error("invalid arguments. Only one path to build file is accepted")
@@ -35,7 +36,7 @@ const parse_arguments = function (arguments) {
     }
 };
 
-const buildCallback = function (err, result) {
+const buildCallback = function(err, result){
     let projectName = path.basename(process.cwd());
 
     if (err) {
@@ -47,7 +48,7 @@ const buildCallback = function (err, result) {
     console.log(`Build process of <${projectName}> finished. Dossier's KeySSI:`, result);
 }
 
-const getCommands = function (data) {
+const getCommands = function(data){
     if (!data)
         return [];
     return data.split(/\r?\n/).filter(cmd => !!cmd.trim());
@@ -74,8 +75,8 @@ const getCommands = function (data) {
  * </pre>
  * defaults to 'default'
  */
-const buildDossier = function (cfg, commands, callback) {
-    if (typeof commands === 'function') {
+const buildDossier = function(cfg, commands, callback){
+    if (typeof commands === 'function'){
         callback = commands;
         commands = [];
     }
@@ -83,16 +84,12 @@ const buildDossier = function (cfg, commands, callback) {
     let openDSU_bundle = path.join(process.cwd(), cfg.bundles, "openDSU.js");
     require(openDSU_bundle);
 
-    require('opendsu').loadApi('dt').getDossierBuilderAsync((err, dossier_builder) => {
-        if (err) {
-            return callback(err);
-        }
-        dossier_builder.buildDossier(cfg, commands, callback);
-    });
+    let dossier_builder = require('opendsu').loadApi('dt').getDossierBuilder();
+    dossier_builder.buildDossier(cfg, commands, callback);
 }
 
 let args = process.argv;
-args.splice(0, 2);
+args.splice(0,2);
 
 const octopus = require("./index.js");
 
