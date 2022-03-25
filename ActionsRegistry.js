@@ -697,13 +697,22 @@ function ActionsRegistry() {
         options.overwrite = !!options.overwrite;
 
         console.log("Start copying " + src + " to folder " + action.target);
-        fsExt.copy(src, action.target, options, (err, ...args) => {
-            if (err && options.ignoreErrors) {
-                console.log(err);
-                err = undefined;
+        try{
+            fsExt.copy(src, action.target, options, (err, ...args) => {
+                if (err && options.ignoreErrors) {
+                    console.log(err);
+                    err = undefined;
+                }
+                callback(err, ...args);
+            });
+        }catch(err){
+            if(options.ignoreErrors){
+                console.log("Ignored according to options.ignoreErrors flag:", err);
+                callback(undefined);
+            }else{
+                throw err;
             }
-            callback(err, ...args);
-        });
+        }
     };
 
     /**
