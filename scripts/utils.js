@@ -102,7 +102,7 @@ module.exports.incrementTag = async function (tag) {
 	}
 	let segments = tag.split(".");
 
-	while (segment.length < 3) {
+	while (segments.length < 3) {
 		segments.push("0");
 	}
 
