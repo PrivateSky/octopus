@@ -104,7 +104,7 @@ module.exports.commitPackageJSON = async function (targetFolder) {
 }
 
 module.exports.incrementTag = async function (tag) {
-	let prefix;
+	let prefix = "";
 	if (["v", "V"].indexOf(tag[0]) !== -1) {
 		prefix = tag[0];
 		tag = tag.substring(1);
