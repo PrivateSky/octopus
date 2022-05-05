@@ -4,7 +4,7 @@ const child_process = require('child_process');
 const readlineModule = "readline";
 const readline = require(readlineModule);
 
-async function askQuestion(question) {
+function askQuestion(question) {
 	return new Promise((resolve, reject) => {
 		const rl = readline.createInterface({
 			input: process.stdin, output: process.stdout
@@ -38,7 +38,7 @@ module.exports.readVersionFromPackageJSON = async function (targetFolder) {
 	} catch (err) {
 		if (err.code === "MODULE_NOT_FOUND") {
 			console.log(`Not able to read package.json file.`);
-			const answer = await askQuestion(`Would you like to initiate a package.json and commit it for you? [y/n]`);
+			const answer = await askQuestion(`Would you like to initiate a package.json and commit it for you? [y/n] `);
 			if (answer === 'y') {
 				version = module.exports.DEFAULT_VERSION;
 				module.exports.createPackageJSON(targetFolder, version);
@@ -50,7 +50,14 @@ module.exports.readVersionFromPackageJSON = async function (targetFolder) {
 }
 
 module.exports.readLatestTagFromRepo = function (targetFolder) {
-	let out = child_process.execSync("git for-each-ref refs/tags --sort=-authordate --format='%(refname:short)' --count=1", {cwd: targetFolder}).toString().trim();
+	try{
+		console.log("Trying to do a fetch --all --tags. Please wait.");
+		child_process.execSync("git fetch --all --tags", {cwd: targetFolder, stdio: 'pipe'});
+	}catch(e){
+		//we ignore on purpose any errors durring git fetch
+	}
+	console.log("Reading latest tag");
+	let out = child_process.execSync("git for-each-ref refs/tags --sort=-taggerdate --format='%(refname:short)' --count=1", {cwd: targetFolder, stdio: 'pipe'}).toString().trim();
 	let tagRegex = /[vV]+[0-9]+.[0-9]+[.0-9]*/gm;
 	if (out) {
 		console.log(`Read tag <${out}> as latest tag`);
@@ -81,7 +88,7 @@ module.exports.commitPackageJSON = async function (targetFolder) {
 		console.log(out);
 	}
 
-	const answer = await askQuestion('Package file was updated and commited do you want to push the changes?[y/n]');
+	const answer = await askQuestion('Package file was updated and commited do you want to push the changes?[y/n] ');
 	if (answer === "y") {
 		const cmd = `git push origin --all`;
 		console.log("Preparing to execute", cmd);
@@ -97,7 +104,9 @@ module.exports.commitPackageJSON = async function (targetFolder) {
 }
 
 module.exports.incrementTag = async function (tag) {
+	let prefix;
 	if (["v", "V"].indexOf(tag[0]) !== -1) {
+		prefix = tag[0];
 		tag = tag.substring(1);
 	}
 	let segments = tag.split(".");
@@ -106,11 +115,12 @@ module.exports.incrementTag = async function (tag) {
 		segments.push("0");
 	}
 
-	segments[2] = Int.parse(segments[2]);
+	segments[2] = parseInt(segments[2]);
 	segments[2]++;
 
 	let newTag = segments.join(".");
-	const answer = await askQuestion(`Incremented tag version to ${newTag}. You can enter the desired value or hit [n] to use the default`);
+	newTag = prefix+newTag;
+	const answer = await askQuestion(`Incremented tag version to ${newTag}. You can enter the desired value or hit [n] to use the default. `);
 	if(answer!=="n"){
 		console.log(`Tag value entered: ${answer}`);
 		newTag = answer;
@@ -121,7 +131,14 @@ module.exports.incrementTag = async function (tag) {
 module.exports.getCommitForTag = function (targetFolder, tag) {
 	const cmd = `git rev-parse ${tag}`;
 	console.log("Executing cmd", cmd, "in target folder", targetFolder);
-	return child_process.execSync(cmd, {cwd: targetFolder}).toString().trim();
+	let out;
+	try{
+		out = child_process.execSync(cmd, {cwd: targetFolder}).toString().trim();
+	}catch(err){
+		console.log(err);
+	}
+
+	return out;
 }
 
 module.exports.createTag = async function (targetFolder, tag) {
@@ -131,7 +148,8 @@ module.exports.createTag = async function (targetFolder, tag) {
 		if(out){
 			console.log(out);
 		}
-		const answer = await askQuestion(`Tag ${tag} was created, do you want to push the changes?[y/n]`);
+
+		const answer = await askQuestion(`Tag ${tag} was created, do you want to push the changes?[y/n] `);
 		if (answer === "y") {
 			const cmd = `git push origin refs/tags/${tag}`;
 			console.log("Preparing to execute cmd", cmd);
@@ -180,7 +198,7 @@ module.exports.getTagDate = function (targetFolder, tag) {
 		out = out.split(" ");
 		out.pop();
 	}
-	return out;
+	return out.length > 0 ? out[0] : out;
 }
 
 module.exports.validateCommitSHA = function (commitSHA, targetFolder) {

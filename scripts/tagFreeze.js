@@ -106,8 +106,8 @@ function freezeConfig(config) {
 						repoLatestTag = await incrementTag(repoLatestTag);
 						ensureVersionInPackageJSON(targetFolder, repoLatestTag);
 						commitPackageJSON(targetFolder);
-						createTag(targetFolder, "v" + repoLatestTag);
-						action.commit = getCommitForTag(repoLatestTag);
+						await createTag(targetFolder, repoLatestTag);
+						action.commit = getCommitForTag(targetFolder, repoLatestTag);
 					} else {
 						let commits = checkIfAnyCommitsBetweenDates(commitDate, tagDate, targetFolder);
 						console.log("Commits", commits);
