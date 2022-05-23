@@ -46,6 +46,7 @@ const buildCallback = function(err, result){
     }
 
     console.log(`Build process of <${projectName}> finished. Dossier's KeySSI:`, result);
+    process.exit(0);
 }
 
 const getCommands = function(data){
