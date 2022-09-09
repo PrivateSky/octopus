@@ -15,11 +15,11 @@ if(fileArg.indexOf(argIdentifier) === -1){
 }
 fileArg = fileArg.replace(argIdentifier, "");
 
-let envJson;
+let envJson = {};
 try{
 	envJson = require(fileArg);
 }catch(err){
-	octopus.handleError("env file not found or contains an invalid JSON!");
+	console.log("env file not found or contains an invalid JSON!");
 }
 
 let fileArgDevel = "./env.json.devel";
@@ -33,7 +33,7 @@ if(fs.existsSync(fileArgDevel)){
 
 const {spawn} = require("child_process");
 Object.assign(process.env, envJson);
-console.log("Environment updated accordingly to env file passed as argument.");
+console.log("Environment was updated.");
 
 const spawn_cmd = args.join(" ");
 
