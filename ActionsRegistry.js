@@ -872,6 +872,52 @@ function ActionsRegistry() {
 
     };
 
+    const escapeRegExp = (string) => {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+    }
+
+    const replaceAll = (str, oldValue, newValue) => {
+        return str.replace(new RegExp(escapeRegExp(oldValue), 'g'), newValue);
+    }
+
+    /**
+     * replaceString
+     * Replaces string inside file specified by actions.src from actions.oldValue to actions.newValue
+     * @param {Object}action. The available options are:
+     * - src <string> (mandatory): file path in which the replace will be done
+     * - oldValue <string> (mandatory): the value that will be replaced
+     * - newValue <string> (mandatory): the value that will be replaced with
+     * @param {Object}dependency
+     * @param {Function}callback
+     */
+    actions.replaceString = function (action, dependency, callback) {
+        if (!action.src) {
+            throw "No source (src) attribute found on: " + JSON.stringify(action);
+        }
+        if (!action.oldValue) {
+            throw "No source (oldValue) attribute found on: " + JSON.stringify(action);
+        }
+        if (!action.newValue) {
+            throw "No source (newValue) attribute found on: " + JSON.stringify(action);
+        }
+
+        const srcFilePath = fsExt.resolvePath(action.src);
+        fs.readFile(srcFilePath, 'utf8', (error, fileContent) => {
+            if(error) {
+                return callback(error);
+            }
+
+            const newFileContent = replaceAll(fileContent, action.oldValue, action.newValue);
+
+            fs.writeFile(srcFilePath, newFileContent, 'utf8', function (error) {
+                if(error) {
+                    return callback(error);
+                }
+                callback();
+            });
+        });
+    };
+
     this.registerActionHandler = function (name, handler, overwrite) {
         if (!name) {
             throw "No action name provided!";
